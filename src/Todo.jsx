@@ -1,17 +1,35 @@
 import { useState } from "react";
 import Todocard from "./TodoCard";
 
-const initialTodos = [{ id: 0, text: "Create initial todo", completed: false }];
+// const initialTodos = [{ id: 0, text: "Create initial todo", completed: false }];
+
+const saveToStorage = (val, key) => {
+  window.localStorage.setItem(key, JSON.stringify(val));
+  console.log(JSON.parse(window.localStorage.getItem("todos")));
+};
 
 const Todo = () => {
   // State för att spara våra todos. Vi lägger dem i en array så att vi kan lägga till hur många vi vill.
-  const [todos, setTodos] = useState(initialTodos);
+  const [todos, setTodos] = useState(() => {
+    const todos = JSON.parse(window.localStorage.getItem("todos"));
+    if (!todos) {
+      return [];
+    }
+    return todos;
+  });
 
   // Kontrollerar vårat input fålt så att vi har direktåtkomst till värdet i våran submitfunktion senare i koden.
   const [todoInput, setTodoInput] = useState("");
 
   // Bara en int som ökas för varje todo för att ge dem ett unikt ID.
-  const [ids, setIds] = useState(1);
+  const [ids, setIds] = useState(() => {
+    let ids = JSON.parse(window.localStorage.getItem("ids"));
+    if (!ids) {
+      ids = 0;
+    }
+    console.log(ids);
+    return ids;
+  });
 
   // Submit eventet i ett fomulär sker automatisk när man trycker enter i ett inputfält i fomruläret.
   const handleSubmit = (e) => {
@@ -19,15 +37,23 @@ const Todo = () => {
     e.preventDefault();
 
     console.log(todoInput);
+    setIds((prev) => {
+      const newIds = prev + 1;
+      saveToStorage(newIds, "ids");
+      setTodos((prev) => {
+        const newTodos = [
+          ...prev,
+          { id: newIds, text: todoInput, completed: false },
+        ];
+
+        saveToStorage(newTodos, "todos");
+        return newTodos;
+      });
+      return newIds;
+    }); // Ökar id med 1 efter vi skapat den nya todon så att vi har ett unikt id till nästa
 
     // Näsr vi skapat en ny todo så vill vi lägga till den i våran array.
-    setTodos((prev) => [
-      // Callbacken returnerar en array
-      ...prev, // Som här innehåller samtliga tidigare element i arrayen
-      { id: ids, text: todoInput, completed: false }, // samt ett nytt element i dettta objekt.
-    ]);
 
-    setIds((prev) => prev + 1); // Ökar id med 1 efter vi skapat den nya todon så att vi har ett unikt id till nästa
     setTodoInput(""); // Nollställer input-fältet
   };
 
@@ -35,7 +61,7 @@ const Todo = () => {
   const handleChecked = (e, todo) => {
     // Vi måste skicka med våran todo i argumenten för att ha något att jämföra med.
     setTodos((prevTodos) => {
-      return prevTodos.map((item) => {
+      const newTodos = prevTodos.map((item) => {
         // Vi returnerar en ny array som innehåller sammma element
         if (todo.id === item.id) {
           // Men här kontrollerar vi om elementet är det som vi vill ändra
@@ -43,6 +69,9 @@ const Todo = () => {
         }
         return item;
       });
+
+      saveToStorage(newTodos, "todos");
+      return newTodos;
     });
   };
 
@@ -59,7 +88,9 @@ const Todo = () => {
     if (confirm) {
       // kollar om vi har fått bekräftelse
       setTodos((prev) => {
-        return prev.filter((item) => todo.id !== item.id); // Filtrerar ut alla element som inte passar mitt kondition. I detta fall så endast det som passat min todo.
+        const newTodos = prev.filter((item) => todo.id !== item.id); // Filtrerar ut alla element som inte passar mitt kondition. I detta fall så endast det som passat min todo.
+        saveToStorage(newTodos, "todos");
+        return newTodos;
       });
     }
   };
@@ -67,24 +98,26 @@ const Todo = () => {
   return (
     <div>
       <h1>Todo</h1>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          width: "400px",
-          margin: "2rem auto",
-        }}
-      >
-        {todos.map((todo) => (
-          <Todocard
-            key={todo.id}
-            todo={todo}
-            handleChecked={handleChecked}
-            handleDelete={handleDelete}
-          />
-        ))}
-      </div>
+      {todos && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            width: "400px",
+            margin: "2rem auto",
+          }}
+        >
+          {todos.map((todo) => (
+            <Todocard
+              key={todo.id}
+              todo={todo}
+              handleChecked={handleChecked}
+              handleDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <input
           type="text"
