@@ -3,8 +3,11 @@ import "./App.css";
 import Button from "./Button";
 import Printcount from "./PrintCount";
 import Todo from "./Todo";
+import Yatzy from "./yatzy/Yatzy";
 
 function App() {
+  const [demo, setDemo] = useState(false);
+
   const [count, setCount] = useState(0); // useState hook. En reaktiv variabel i react.
   const [text, setText] = useState("");
 
@@ -16,6 +19,7 @@ function App() {
 
   return (
     <div className="App">
+      <button onClick={() => setDemo(!demo)}>Toggle Todo or Yatzy</button>
       {/* <h1>Hello</h1> */}
       {/* <p style={{ fontSize: "4rem", fontWeight: "bolder" }}>{count[0]}</p> */}
       {/* <Printcount count={count} />
@@ -41,7 +45,7 @@ function App() {
       >
         Increase count
       </button> */}
-      <Todo />
+      {demo ? <Todo /> : <Yatzy />}
     </div>
   );
 }
